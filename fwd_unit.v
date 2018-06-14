@@ -1,5 +1,9 @@
 //Forwarding unit
-// Oscar Moreno 1410718
+
+//By 
+// Oscar Moreno
+// Carlos Sanoja
+// Will Chacon
 
 module fwd_unit(
 						input [4:0] EX_rd,
@@ -12,53 +16,45 @@ module fwd_unit(
 						input [1:0] rs2,
 						output [1:0] fwd_A,          // Output 1 (Mux control signal)
 						output [1:0] fwd_B           // Output 2 (Mux control signal)
+						output reg stall
+						output reg stall
 						);
- 
-	reg [1:0] aux_1, aux_2;
-	
+
 	always@*
 		begin
 
 		//Execution 
-		
 		if((rs1 & (EX_rd != 0)) | (rs2 & (EX_rd != 0)))
-			aux_1 = 2'b01;   //fwd
-			EX_inst = 2'b01;
-			
-		else 
+			if (EX_inst == 01) begin
+				fwd_A = 2'b01;   //fwd
+				fwd_B = 2'b01;
+			end else 
+				stall = 1;
+				end
 		// Memory
 		if((rs2 & ( MEM_rd!= 0)) | (rs2 & (MEM_rd != 0)))
-			aux_1 = 2'b01;   
-			MEM_inst = 2'b01;
-			aux_2 = 2'b10;
-
-			//WB
-		if((rs2 & ( WB_rd!= 0)) | (rs2 & (WB_rd != 0)))
-			aux_1 = 2'b01;  
-			WB_inst = 2'b01;
-			aux_2 = 2'b10;
-			
+			if ( (MEM_inst == 01) || (MEM_inst == 10) ) begin
+	       //Se realiza  forwarding
+	            fwd_A = 2'b10;
+	            fwd_B = 2'b10;
+	       end else 
+				stall = 1;
+				end
 		else 
-			WB_inst = 2'b01;
-			aux_2 = 2'b11;
+				stall = 1;
+        end 
+		
+		//WB
+		if((rs2 & ( WB_rd!= 0)) | (rs2 & (WB_rd != 0)))
+			if ( (WB_inst == 01) || (WB_inst == 10) || (WB_inst == 11) ) begin
+			
+				fwd_A = 2'b11;
+	            fwd_B = 2'b11;
+			end
 		end
 	
-	assign fwd_A = aux_1;
-	assign fwd_B = aux_2;
+
 endmodule
 
 
 
-
-
-
-
-
-
-
-
-//input EX_MEM_RegWrite,         
-	//					input MemToReg_MEM,            
-		//				input MEM_WB_RegWrite,         
-			//			input [4:0] ID_EX_RegisterRs,  
-				//		input [4:0] ID_EX_RegisterRt, 
